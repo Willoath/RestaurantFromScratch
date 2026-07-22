@@ -15,6 +15,9 @@ namespace RestaurantFromScratch.Services
             _context.Tables.Add(table);
             _context.SaveChanges();
         }
+        public List<Table> GetAllTables() { 
+        return _context.Tables.ToList();
+        }
 
     }
 }
