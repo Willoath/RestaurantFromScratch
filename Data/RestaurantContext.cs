@@ -8,9 +8,9 @@ namespace RestaurantFromScratch.Data
     : base(options)
         {
         }
-        DbSet<Reservation> Reservations { get; set; } = null!;
-        DbSet<Table> Tables { get; set; } = null!;
-        DbSet<MenuItem> MenuItems { get; set; } = null!;
+        public DbSet<Reservation> Reservations { get; set; } = null!;
+        public DbSet<Table> Tables { get; set; } = null!;
+        public DbSet<MenuItem> MenuItems { get; set; } = null!;
     }
     
 }

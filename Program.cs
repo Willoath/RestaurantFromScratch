@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantFromScratch.Data;
+using RestaurantFromScratch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -10,6 +11,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<RestaurantContext>(options =>
     options.UseSqlite("Data Source=restaurant.db"));
+
+builder.Services.AddScoped<TableService>();
 
 var app = builder.Build();
 
