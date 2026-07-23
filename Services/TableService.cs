@@ -19,5 +19,10 @@ namespace RestaurantFromScratch.Services
         return _context.Tables.ToList();
         }
 
+        public Table? GetTableById(int id)
+        {
+            return _context.Tables.FirstOrDefault(t => t.Id == id);
+        }
+
     }
 }

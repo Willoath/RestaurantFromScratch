@@ -20,7 +20,16 @@ namespace RestaurantFromScratch.Controllers
         {
             return _tableService.GetAllTables();
         }
-
+        [HttpGet("{id}")]
+        public ActionResult<Table> GetTableById(int id)
+        {
+            var table = _tableService.GetTableById(id);
+            if (table == null)
+            {
+                return NotFound();
+            }
+            return Ok(table);
+        }
     }
 
     } 
