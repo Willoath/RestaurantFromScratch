@@ -30,6 +30,13 @@ namespace RestaurantFromScratch.Controllers
             }
             return Ok(table);
         }
-    }
+        [HttpPost]
+        public ActionResult<Table> AddTable([FromBody] Table table)
+        {
+            _tableService.AddTable(table);
+            return CreatedAtAction(nameof(GetTableById), new { id = table.Id }, table);
 
-    } 
+        }
+
+    }
+}
