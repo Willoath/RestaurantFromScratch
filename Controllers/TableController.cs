@@ -37,6 +37,16 @@ namespace RestaurantFromScratch.Controllers
             return CreatedAtAction(nameof(GetTableById), new { id = table.Id }, table);
 
         }
+        [HttpPut("{id}")]
+        public ActionResult UpdateTable(int id, [FromBody] Table updatedTable)
+        {
+            var updated = _tableService.UpdateTable(id, updatedTable);
+            if (!updated)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
 
     }
 }

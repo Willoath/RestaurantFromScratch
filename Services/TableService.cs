@@ -25,19 +25,19 @@ namespace RestaurantFromScratch.Services
         {
             return _context.Tables.FirstOrDefault(t => t.Id == id);
         }
-        public void UpdateTable(int id, Table updatedTable)
+        public bool UpdateTable(int id, Table updatedTable)
         {
             var existingTable = _context.Tables.FirstOrDefault(t => t.Id == id);
             if (existingTable == null)
             {
-                return;
+                return false;
             }
 
             existingTable.TableNumber = updatedTable.TableNumber;
             existingTable.Seats = updatedTable.Seats;
             existingTable.IsActive = updatedTable.IsActive;
             _context.SaveChanges();
-
+            return true;
 
         }
 
