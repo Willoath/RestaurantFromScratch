@@ -47,6 +47,16 @@ namespace RestaurantFromScratch.Controllers
             }
             return NoContent();
         }
+        [HttpDelete("{id}")]
+        public ActionResult DeleteTable(int id)
+        {
+            var deleted = _tableService.DeleteTable(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
 
     }
 }

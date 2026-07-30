@@ -40,6 +40,17 @@ namespace RestaurantFromScratch.Services
             return true;
 
         }
+        public bool DeleteTable(int id)
+        {
+            var table = _context.Tables.FirstOrDefault(t => t.Id == id);
+            if (table == null)
+            {
+                return false;
+            }
+            _context.Tables.Remove(table);
+            _context.SaveChanges();
+            return true;
+        }
 
     }
 }
