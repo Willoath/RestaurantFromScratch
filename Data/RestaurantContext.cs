@@ -11,6 +11,7 @@ namespace RestaurantFromScratch.Data
         public DbSet<Reservation> Reservations { get; set; } = null!;
         public DbSet<Table> Tables { get; set; } = null!;
         public DbSet<MenuItem> MenuItems { get; set; } = null!;
+        
     }
     
 }
