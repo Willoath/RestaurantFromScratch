@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestaurantFromScratch.Services;
 using RestaurantFromScratch.Models;
+using RestaurantApi.Enums;
 
 namespace RestaurantFromScratch.Controllers
 {
@@ -35,10 +36,14 @@ namespace RestaurantFromScratch.Controllers
         [HttpPost]
         public ActionResult AddReservation([FromBody] Reservation reservation)
         {
-            var added = _reservationService.AddReservation(reservation);
-            if (!added)
+            var result = _reservationService.AddReservation(reservation);
+            if (result == AddReservationResult.TableNotFound)
             {
-                return BadRequest("The reservation could not be added. Please check the details and try again.");
+                return NotFound();
+            }
+            if (result == AddReservationResult.TableAlreadyReserved)
+            {
+                return Conflict("The table is already reserved for the selected time.");
             }
             return CreatedAtAction(nameof(GetReservationById), new { id = reservation.Id }, reservation);
         }

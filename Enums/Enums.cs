@@ -1,0 +1,17 @@
+﻿namespace RestaurantApi.Enums
+{
+
+    public enum Category
+    {
+        Appetizer,
+        MainCourse,
+        Dessert,
+        Beverage
+    }
+    public enum AddReservationResult
+    {
+        Success,
+        TableNotFound,
+        TableAlreadyReserved
+    }
+}
