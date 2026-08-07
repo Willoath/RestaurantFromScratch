@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RestaurantFromScratch.Migrations
+namespace RestaurantApi.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -50,9 +50,9 @@ namespace RestaurantFromScratch.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     CustomerName = table.Column<string>(type: "TEXT", nullable: false),
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    ReservatioDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReservationStart = table.Column<DateTime>(type: "TEXT", nullable: false),
                     NumberOfGuests = table.Column<int>(type: "INTEGER", nullable: false),
-                    Duration = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    ReservationEnd = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Notes = table.Column<string>(type: "TEXT", nullable: true),
                     TableId = table.Column<int>(type: "INTEGER", nullable: false)
                 },

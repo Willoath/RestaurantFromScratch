@@ -1,6 +1,13 @@
 @RestaurantFromScratch_HostAddress = http://localhost:5004
 
-GET {{RestaurantFromScratch_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{RestaurantFromScratch_HostAddress}}/api/reservation
+Content-Type: application/json
 
-###
+{
+  "customerName": "",
+  "phoneNumber": "123456789",
+  "reservationStart": "2026-08-10T18:00:00",
+  "reservationEnd": "2026-08-10T20:00:00",
+  "numberOfGuests": 4,
+  "tableId": 1
+}

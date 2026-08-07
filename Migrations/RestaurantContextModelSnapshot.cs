@@ -7,7 +7,7 @@ using RestaurantFromScratch.Data;
 
 #nullable disable
 
-namespace RestaurantFromScratch.Migrations
+namespace RestaurantApi.Migrations
 {
     [DbContext(typeof(RestaurantContext))]
     partial class RestaurantContextModelSnapshot : ModelSnapshot
@@ -51,9 +51,6 @@ namespace RestaurantFromScratch.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeSpan>("Duration")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");
 
@@ -64,7 +61,10 @@ namespace RestaurantFromScratch.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ReservatioDate")
+                    b.Property<DateTime>("ReservationEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ReservationStart")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("TableId")
