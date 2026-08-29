@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestaurantFromScratch.Services;
 using RestaurantFromScratch.Models;
-using RestaurantApi.Enums;
+using RestaurantFromScratch.Enums;
+using RestaurantFromScratch.Dtos;
 
 namespace RestaurantFromScratch.Controllers
 {
@@ -46,6 +47,15 @@ namespace RestaurantFromScratch.Controllers
                 return Conflict("The table is already reserved for the selected time.");
             }
             return CreatedAtAction(nameof(GetReservationById), new { id = reservation.Id }, reservation);
+        }
+        [HttpPut("{id}")]
+        public ActionResult UpdateReservation(int id, [FromBody] UpdateReservationDto updatedReservation)
+        {
+            if (!_reservationService.UpdateReservation(updatedReservation, id))
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
 
 

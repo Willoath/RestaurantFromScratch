@@ -1,7 +1,8 @@
 ﻿using RestaurantFromScratch.Data;
 using RestaurantFromScratch.Models;
 using Microsoft.EntityFrameworkCore;
-using RestaurantApi.Enums;
+using RestaurantFromScratch.Enums;
+using RestaurantFromScratch.Dtos;
 
 namespace RestaurantFromScratch.Services
 {
@@ -23,7 +24,7 @@ namespace RestaurantFromScratch.Services
             {
                 return AddReservationResult.TableNotFound;
             }
-            if (!IsTableAvailable(reservation))
+            if (!IsTableAvailable(reservation.TableId, reservation.ReservationStart, reservation.ReservationEnd))
             {
                 return AddReservationResult.TableAlreadyReserved;
             }
@@ -42,17 +43,35 @@ namespace RestaurantFromScratch.Services
 
             return reservation;
         }
-        private bool IsTableAvailable(Reservation reservation)
+        private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
         {
-            List<Reservation> existingReservations = _context.Reservations.Where(r => r.TableId == reservation.TableId).ToList();
+            List<Reservation> existingReservations = _context.Reservations.Where(r => r.TableId == tableId && r.Id != excludedReservationId).ToList();
             foreach (var existingReservation in existingReservations)
             {
-                if (reservation.ReservationStart < existingReservation.ReservationEnd && reservation.ReservationEnd > existingReservation.ReservationStart)
+                if (reservationStart < existingReservation.ReservationEnd && reservationEnd > existingReservation.ReservationStart)
                 {
                     return false;
                 }
             }
             return true;
+        }
+        public bool UpdateReservation(UpdateReservationDto updatedReservation, int id)
+        {
+            var existingReservation = _context.Reservations.FirstOrDefault(r => r.Id == id);
+
+
+            if (existingReservation == null || !IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id)) {
+                return false;
+            }
+            existingReservation.ReservationStart = updatedReservation.ReservationStart;
+            existingReservation.ReservationEnd = updatedReservation.ReservationEnd;
+            existingReservation.CustomerName = updatedReservation.CustomerName;
+            existingReservation.PhoneNumber = updatedReservation.PhoneNumber;
+            existingReservation.NumberOfGuests = updatedReservation.NumberOfGuests;
+            existingReservation.Notes = updatedReservation.Notes;
+            _context.SaveChanges();
+            return true;
+
         }
 
     }

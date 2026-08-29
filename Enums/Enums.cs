@@ -1,4 +1,4 @@
-﻿namespace RestaurantApi.Enums
+﻿namespace RestaurantFromScratch.Enums
 {
 
     public enum Category
