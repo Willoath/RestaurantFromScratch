@@ -1,4 +1,4 @@
-﻿using RestaurantApi.Enums;
+﻿using RestaurantFromScratch.Enums;
 using System.ComponentModel.DataAnnotations;
 namespace RestaurantFromScratch.Models
 {

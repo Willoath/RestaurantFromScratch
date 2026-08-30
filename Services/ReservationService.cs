@@ -55,13 +55,18 @@ namespace RestaurantFromScratch.Services
             }
             return true;
         }
-        public bool UpdateReservation(UpdateReservationDto updatedReservation, int id)
+        public UpdateReservationResult UpdateReservation(UpdateReservationDto updatedReservation, int id)
         {
             var existingReservation = _context.Reservations.FirstOrDefault(r => r.Id == id);
 
 
-            if (existingReservation == null || !IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id)) {
-                return false;
+            if (existingReservation == null)
+            {
+                return UpdateReservationResult.ReservationNotFound;
+            }
+            if (!IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id))
+            {
+                return UpdateReservationResult.TableAlreadyReserved;
             }
             existingReservation.ReservationStart = updatedReservation.ReservationStart;
             existingReservation.ReservationEnd = updatedReservation.ReservationEnd;
@@ -70,7 +75,7 @@ namespace RestaurantFromScratch.Services
             existingReservation.NumberOfGuests = updatedReservation.NumberOfGuests;
             existingReservation.Notes = updatedReservation.Notes;
             _context.SaveChanges();
-            return true;
+            return UpdateReservationResult.Success;
 
         }
 

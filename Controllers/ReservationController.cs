@@ -51,9 +51,14 @@ namespace RestaurantFromScratch.Controllers
         [HttpPut("{id}")]
         public ActionResult UpdateReservation(int id, [FromBody] UpdateReservationDto updatedReservation)
         {
-            if (!_reservationService.UpdateReservation(updatedReservation, id))
+            var result = _reservationService.UpdateReservation(updatedReservation, id);
+            if (result == UpdateReservationResult.ReservationNotFound)
             {
                 return NotFound();
+            }
+            if (result == UpdateReservationResult.TableAlreadyReserved)
+            {
+                return Conflict("The table is already reserved for the selected time.");
             }
             return NoContent();
         }

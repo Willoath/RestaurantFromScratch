@@ -14,4 +14,10 @@
         TableNotFound,
         TableAlreadyReserved
     }
+    public enum UpdateReservationResult
+    {
+        Success,
+        ReservationNotFound,
+        TableAlreadyReserved
+    }
 }
