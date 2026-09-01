@@ -3,6 +3,7 @@ using RestaurantFromScratch.Models;
 using Microsoft.EntityFrameworkCore;
 using RestaurantFromScratch.Enums;
 using RestaurantFromScratch.Dtos;
+using RestaurantFromScratch.Results;
 
 namespace RestaurantFromScratch.Services
 {
@@ -17,20 +18,30 @@ namespace RestaurantFromScratch.Services
 
 
 
-        public AddReservationResult AddReservation(Reservation reservation)
+        public AddReservationServiceResult AddReservation(CreateReservationDto reservation)
         {
             var tableExists = _context.Tables.Any(t => t.Id == reservation.TableId);
             if (!tableExists)
             {
-                return AddReservationResult.TableNotFound;
+                return new AddReservationServiceResult { Result = AddReservationResult.TableNotFound };
             }
             if (!IsTableAvailable(reservation.TableId, reservation.ReservationStart, reservation.ReservationEnd))
             {
-                return AddReservationResult.TableAlreadyReserved;
+                return new AddReservationServiceResult { Result = AddReservationResult.TableAlreadyReserved };
             }
-            _context.Reservations.Add(reservation);
+            var newReservation = new Reservation
+            {
+                CustomerName = reservation.CustomerName,
+                PhoneNumber = reservation.PhoneNumber,
+                ReservationStart = reservation.ReservationStart,
+                ReservationEnd = reservation.ReservationEnd,
+                NumberOfGuests = reservation.NumberOfGuests,
+                Notes = reservation.Notes,
+                TableId = reservation.TableId
+            };
+            _context.Reservations.Add(newReservation);
             _context.SaveChanges();
-            return AddReservationResult.Success;
+            return new AddReservationServiceResult { Result = AddReservationResult.Success, ReservationId = newReservation.Id };
 
         }
         public List<Reservation> GetAllReservations()
