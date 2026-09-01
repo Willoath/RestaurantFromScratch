@@ -62,6 +62,16 @@ namespace RestaurantFromScratch.Controllers
             }
             return NoContent();
         }
+        [HttpDelete("{id}")]
+        public ActionResult DeleteReservation(int id)
+        {
+            var deleted = _reservationService.DeleteReservation(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
 
 
     }

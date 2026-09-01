@@ -78,6 +78,17 @@ namespace RestaurantFromScratch.Services
             return UpdateReservationResult.Success;
 
         }
+        public bool DeleteReservation(int id)
+        {
+            var reservation = _context.Reservations.FirstOrDefault(r => r.Id == id);
+            if (reservation == null)
+            {
+                return false;
+            }
+            _context.Reservations.Remove(reservation);
+            _context.SaveChanges();
+            return true;
+        }
 
     }
 }
