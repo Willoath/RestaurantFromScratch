@@ -18,12 +18,12 @@ namespace RestaurantFromScratch.Controllers
         }
 
         [HttpGet]
-        public List<Reservation> GetAllReservations()
+        public List<ReservationDto> GetAllReservations()
         {
             return _reservationService.GetAllReservations();
         }
         [HttpGet("{id}")]
-        public ActionResult<Reservation> GetReservationById(int id)
+        public ActionResult<ReservationDto> GetReservationById(int id)
         {
             var reservation = _reservationService.GetReservationById(id);
 

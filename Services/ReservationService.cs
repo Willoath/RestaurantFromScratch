@@ -44,15 +44,40 @@ namespace RestaurantFromScratch.Services
             return new AddReservationServiceResult { Result = AddReservationResult.Success, ReservationId = newReservation.Id };
 
         }
-        public List<Reservation> GetAllReservations()
+        public List<ReservationDto> GetAllReservations()
         {
-            return _context.Reservations.ToList();
+            return _context.Reservations.Select(r => new ReservationDto
+            {
+                Id = r.Id,
+                CustomerName = r.CustomerName,
+                PhoneNumber = r.PhoneNumber,
+                ReservationStart = r.ReservationStart,
+                ReservationEnd = r.ReservationEnd,
+                NumberOfGuests = r.NumberOfGuests,
+                Notes = r.Notes,
+                TableId = r.TableId,
+                TableNumber = r.Table.TableNumber,
+                TableSeats = r.Table.Seats
+            }).ToList();
         }
-        public Reservation? GetReservationById(int id)
+        public ReservationDto? GetReservationById(int id)
         {
             var reservation = _context.Reservations.Include(r => r.Table).FirstOrDefault(r => r.Id == id);
+            if (reservation == null) { return null; }
 
-            return reservation;
+            return new ReservationDto
+            {
+                Id = reservation.Id,
+                CustomerName = reservation.CustomerName,
+                PhoneNumber = reservation.PhoneNumber,
+                ReservationStart = reservation.ReservationStart,
+                ReservationEnd = reservation.ReservationEnd,
+                NumberOfGuests = reservation.NumberOfGuests,
+                Notes = reservation.Notes,
+                TableId = reservation.TableId,
+                TableNumber = reservation.Table.TableNumber,
+                TableSeats = reservation.Table.Seats
+            };
         }
         private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
         {
