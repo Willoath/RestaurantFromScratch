@@ -20,10 +20,14 @@ namespace RestaurantFromScratch.Services
 
         public AddReservationServiceResult AddReservation(CreateReservationDto reservation)
         {
-            var tableExists = _context.Tables.Any(t => t.Id == reservation.TableId);
-            if (!tableExists)
+            var table = _context.Tables.FirstOrDefault(t => t.Id == reservation.TableId);
+            if (table == null)
             {
                 return new AddReservationServiceResult { Result = AddReservationResult.TableNotFound };
+            }
+            if (!IsThereEnoughSeats(table.Seats, reservation.NumberOfGuests))
+            {
+                return new AddReservationServiceResult { Result = AddReservationResult.NotEnoughSeats };
             }
             if (!IsTableAvailable(reservation.TableId, reservation.ReservationStart, reservation.ReservationEnd))
             {
@@ -91,14 +95,22 @@ namespace RestaurantFromScratch.Services
             }
             return true;
         }
+        private bool IsThereEnoughSeats(int seats, int numberOfGuests)
+        {
+            return seats >= numberOfGuests;
+        }
         public UpdateReservationResult UpdateReservation(UpdateReservationDto updatedReservation, int id)
         {
-            var existingReservation = _context.Reservations.FirstOrDefault(r => r.Id == id);
+            var existingReservation = _context.Reservations.Include(r => r.Table).FirstOrDefault(r => r.Id == id);
 
 
             if (existingReservation == null)
             {
                 return UpdateReservationResult.ReservationNotFound;
+            }
+            if (!IsThereEnoughSeats(existingReservation.Table.Seats,updatedReservation.NumberOfGuests))
+            {
+                return UpdateReservationResult.NotEnoughSeats;
             }
             if (!IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id))
             {

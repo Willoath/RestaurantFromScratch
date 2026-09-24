@@ -2,7 +2,7 @@
 
 namespace RestaurantFromScratch.Dtos
 {
-    public class CreateReservationDto
+    public class CreateReservationDto : IValidatableObject
     {
         [Required]
         public string CustomerName { get; set; } = string.Empty;
@@ -15,5 +15,17 @@ namespace RestaurantFromScratch.Dtos
         public string? Notes { get; set; }
         [Range(1, int.MaxValue)]
         public int TableId { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (ReservationStart >= ReservationEnd)
+            {
+                yield return new ValidationResult("Reservation start time must be before end time.", new[] { nameof(ReservationStart), nameof(ReservationEnd) });
+            }
+            if (ReservationStart <= DateTime.Now)
+            {
+                yield return new ValidationResult("Reservation start time must be in the future.", new[] { nameof(ReservationStart) });
+            }
+        }
     }
 }

@@ -42,6 +42,10 @@ namespace RestaurantFromScratch.Controllers
             {
                 return NotFound();
             }
+            if (result.Result == AddReservationResult.NotEnoughSeats)
+            {
+                return Conflict("The selected table does not have enough seats.");
+            }
             if (result.Result == AddReservationResult.TableAlreadyReserved)
             {
                 return Conflict("The table is already reserved for the selected time.");
@@ -55,6 +59,10 @@ namespace RestaurantFromScratch.Controllers
             if (result == UpdateReservationResult.ReservationNotFound)
             {
                 return NotFound();
+            }
+            if (result == UpdateReservationResult.NotEnoughSeats)
+            {
+                return Conflict("The selected table does not have enough seats.");
             }
             if (result == UpdateReservationResult.TableAlreadyReserved)
             {
