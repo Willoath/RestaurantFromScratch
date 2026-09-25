@@ -85,15 +85,10 @@ namespace RestaurantFromScratch.Services
         }
         private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
         {
-            List<Reservation> existingReservations = _context.Reservations.Where(r => r.TableId == tableId && r.Id != excludedReservationId).ToList();
-            foreach (var existingReservation in existingReservations)
-            {
-                if (reservationStart < existingReservation.ReservationEnd && reservationEnd > existingReservation.ReservationStart)
-                {
-                    return false;
-                }
-            }
-            return true;
+            var hasConflict = _context.Reservations.Any(r => r.TableId == tableId && r.Id != excludedReservationId &&
+    reservationStart < r.ReservationEnd &&
+    reservationEnd > r.ReservationStart);
+            return !hasConflict;
         }
         private bool IsThereEnoughSeats(int seats, int numberOfGuests)
         {
@@ -108,7 +103,7 @@ namespace RestaurantFromScratch.Services
             {
                 return UpdateReservationResult.ReservationNotFound;
             }
-            if (!IsThereEnoughSeats(existingReservation.Table.Seats,updatedReservation.NumberOfGuests))
+            if (!IsThereEnoughSeats(existingReservation.Table.Seats, updatedReservation.NumberOfGuests))
             {
                 return UpdateReservationResult.NotEnoughSeats;
             }
