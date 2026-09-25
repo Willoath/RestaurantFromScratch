@@ -1,4 +1,5 @@
 ﻿using RestaurantFromScratch.Data;
+using RestaurantFromScratch.Dtos;
 using RestaurantFromScratch.Models;
 using SQLitePCL;
 
@@ -19,6 +20,16 @@ namespace RestaurantFromScratch.Services
         public List<Table> GetAllTables()
         {
             return _context.Tables.ToList();
+        }
+        public List<AvailableTableDto> GetAvailableTables(AvailableTablesQueryDto query)
+        {
+            return _context.Tables.Where(t => t.IsActive && t.Seats >= query.NumberOfGuests && !_context.Reservations.Any(r => r.TableId == t.Id && query.ReservationStart < r.ReservationEnd &&
+        query.ReservationEnd > r.ReservationStart)).Select(t => new AvailableTableDto
+        {
+            Id = t.Id,
+            TableNumber = t.TableNumber,
+            Seats = t.Seats
+        }).ToList();
         }
 
         public Table? GetTableById(int id)
@@ -53,4 +64,5 @@ namespace RestaurantFromScratch.Services
         }
 
     }
+
 }

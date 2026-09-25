@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestaurantFromScratch.Services;
 using RestaurantFromScratch.Models;
+using RestaurantFromScratch.Dtos;
 
 namespace RestaurantFromScratch.Controllers
 {
@@ -29,6 +30,12 @@ namespace RestaurantFromScratch.Controllers
                 return NotFound();
             }
             return Ok(table);
+        }
+        [HttpGet("available")]
+        public ActionResult GetAvailableTables([FromQuery] AvailableTablesQueryDto query)
+        {
+            var tables = _tableService.GetAvailableTables(query);
+            return Ok(tables);
         }
         [HttpPost]
         public ActionResult<Table> AddTable([FromBody] Table table)
