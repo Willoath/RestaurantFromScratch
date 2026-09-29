@@ -83,11 +83,61 @@ namespace RestaurantFromScratch.Services
                 TableSeats = reservation.Table.Seats
             };
         }
+        public NextAvailableReservationDto? GetNextAvailableReservation(AvailableTablesQueryDto query)
+        {
+            var suitableTables = _context.Tables
+                .Where(t => t.Seats >= query.NumberOfGuests && t.IsActive == true)
+                .ToList();
+            var duration = query.ReservationEnd - query.ReservationStart;
+            var nextavailableReservations = new List<NextAvailableReservationDto>();
+
+            var tableIds = suitableTables.Select(t => t.Id).ToList();
+
+            var existingReservations = _context.Reservations
+                .Where(r => tableIds.Contains(r.TableId) &&
+                            r.ReservationEnd > query.ReservationStart)
+                .OrderBy(r => r.ReservationStart)
+                .ToList();
+            for (int j = 0; j < suitableTables.Count; j++)
+            {
+                var reservationsForTable = existingReservations
+                .Where(r => r.TableId == suitableTables[j].Id);
+                var candidateStart = query.ReservationStart;
+
+                    foreach (var existingReservation in reservationsForTable)
+                    {
+                        var candidateEnd = candidateStart + duration;
+
+                        if (candidateEnd <= existingReservation.ReservationStart)
+                        {
+                            break;
+                        }
+
+                        if (candidateStart < existingReservation.ReservationEnd &&
+                            candidateEnd > existingReservation.ReservationStart)
+                        {
+                            candidateStart = existingReservation.ReservationEnd;
+                        }
+                    }
+                var nextAvailableReservation = new NextAvailableReservationDto
+                {
+                    TableId = suitableTables[j].Id,
+                    TableNumber = suitableTables[j].TableNumber,
+                    Seats = suitableTables[j].Seats,
+                    ReservationStart = candidateStart,
+                    ReservationEnd = candidateStart + duration
+                };
+                nextavailableReservations.Add(nextAvailableReservation);
+            }
+
+            return nextavailableReservations.OrderBy(r => r.ReservationStart).FirstOrDefault();
+        }
+
         private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
         {
             var hasConflict = _context.Reservations.Any(r => r.TableId == tableId && r.Id != excludedReservationId &&
-    reservationStart < r.ReservationEnd &&
-    reservationEnd > r.ReservationStart);
+                reservationStart < r.ReservationEnd &&
+                reservationEnd > r.ReservationStart);
             return !hasConflict;
         }
         private bool IsThereEnoughSeats(int seats, int numberOfGuests)

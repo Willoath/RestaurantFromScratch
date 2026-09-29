@@ -33,6 +33,16 @@ namespace RestaurantFromScratch.Controllers
             }
             return Ok(reservation);
         }
+        [HttpGet("nextavailable")]
+        public ActionResult<NextAvailableReservationDto> GetNextAvailableReservation([FromQuery] AvailableTablesQueryDto query)
+        {
+            var reservation = _reservationService.GetNextAvailableReservation(query);
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+            return Ok(reservation);
+        }
 
         [HttpPost]
         public ActionResult AddReservation([FromBody] CreateReservationDto reservation)
