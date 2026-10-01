@@ -1,9 +1,11 @@
-﻿using RestaurantFromScratch.Data;
-using RestaurantFromScratch.Models;
+﻿using Microsoft.AspNetCore.Routing.Matching;
 using Microsoft.EntityFrameworkCore;
-using RestaurantFromScratch.Enums;
+using RestaurantFromScratch.Data;
 using RestaurantFromScratch.Dtos;
+using RestaurantFromScratch.Enums;
+using RestaurantFromScratch.Models;
 using RestaurantFromScratch.Results;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace RestaurantFromScratch.Services
 {
@@ -89,7 +91,7 @@ namespace RestaurantFromScratch.Services
                 .Where(t => t.Seats >= query.NumberOfGuests && t.IsActive == true)
                 .ToList();
             var duration = query.ReservationEnd - query.ReservationStart;
-            var nextavailableReservations = new List<NextAvailableReservationDto>();
+            var nextAvailableReservations = new List<NextAvailableReservationDto>();
 
             var tableIds = suitableTables.Select(t => t.Id).ToList();
 
@@ -98,39 +100,46 @@ namespace RestaurantFromScratch.Services
                             r.ReservationEnd > query.ReservationStart)
                 .OrderBy(r => r.ReservationStart)
                 .ToList();
-            for (int j = 0; j < suitableTables.Count; j++)
+            foreach(var table in suitableTables)
             {
                 var reservationsForTable = existingReservations
-                .Where(r => r.TableId == suitableTables[j].Id);
-                var candidateStart = query.ReservationStart;
+                .Where(r => r.TableId == table.Id);
+                
 
-                    foreach (var existingReservation in reservationsForTable)
-                    {
-                        var candidateEnd = candidateStart + duration;
+                var nextAvailableStart = FindNextAvailableStart(query.ReservationStart, duration, reservationsForTable);
 
-                        if (candidateEnd <= existingReservation.ReservationStart)
-                        {
-                            break;
-                        }
-
-                        if (candidateStart < existingReservation.ReservationEnd &&
-                            candidateEnd > existingReservation.ReservationStart)
-                        {
-                            candidateStart = existingReservation.ReservationEnd;
-                        }
-                    }
                 var nextAvailableReservation = new NextAvailableReservationDto
                 {
-                    TableId = suitableTables[j].Id,
-                    TableNumber = suitableTables[j].TableNumber,
-                    Seats = suitableTables[j].Seats,
-                    ReservationStart = candidateStart,
-                    ReservationEnd = candidateStart + duration
+                    TableId = table.Id,
+                    TableNumber = table.TableNumber,
+                    Seats = table.Seats,
+                    ReservationStart = nextAvailableStart,
+                    ReservationEnd = nextAvailableStart + duration
                 };
-                nextavailableReservations.Add(nextAvailableReservation);
+                nextAvailableReservations.Add(nextAvailableReservation);
             }
 
-            return nextavailableReservations.OrderBy(r => r.ReservationStart).FirstOrDefault();
+            return nextAvailableReservations.OrderBy(r => r.ReservationStart).FirstOrDefault();
+        }
+        private DateTime FindNextAvailableStart(DateTime requestedStart,TimeSpan duration,IEnumerable<Reservation> reservations)
+        {
+            var candidateStart = requestedStart;
+            foreach (var existingReservation in reservations.OrderBy(r => r.ReservationStart))
+            {
+                var candidateEnd = candidateStart + duration;
+
+                if (candidateEnd <= existingReservation.ReservationStart)
+                {
+                    break;
+                }
+
+                if (candidateStart < existingReservation.ReservationEnd &&
+                    candidateEnd > existingReservation.ReservationStart)
+                {
+                    candidateStart = existingReservation.ReservationEnd;
+                }
+            }
+            return candidateStart;
         }
 
         private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
