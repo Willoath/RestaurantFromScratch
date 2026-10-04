@@ -13,7 +13,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<RestaurantContext>(options =>
     options.UseSqlite("Data Source=restaurant.db"));
-
+builder.Services.AddScoped<OpeningHoursService>();
 builder.Services.AddScoped<TableService>();
 builder.Services.AddScoped<ReservationService>();
 

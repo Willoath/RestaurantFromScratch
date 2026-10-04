@@ -52,6 +52,10 @@ namespace RestaurantFromScratch.Controllers
             {
                 return NotFound();
             }
+            if (result.Result == AddReservationResult.RestaurantClosed)
+            {
+                return Conflict("The restaurant is closed at the selected time.");
+            }
             if (result.Result == AddReservationResult.NotEnoughSeats)
             {
                 return Conflict("The selected table does not have enough seats.");
@@ -69,6 +73,10 @@ namespace RestaurantFromScratch.Controllers
             if (result == UpdateReservationResult.ReservationNotFound)
             {
                 return NotFound();
+            }
+            if (result == UpdateReservationResult.RestaurantClosed)
+            {
+                return Conflict("The restaurant is closed at the selected time.");
             }
             if (result == UpdateReservationResult.NotEnoughSeats)
             {

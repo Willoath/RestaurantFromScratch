@@ -13,13 +13,15 @@
         Success,
         TableNotFound,
         TableAlreadyReserved,
-        NotEnoughSeats
+        NotEnoughSeats,
+        RestaurantClosed
     }
     public enum UpdateReservationResult
     {
         Success,
         ReservationNotFound,
         TableAlreadyReserved,
-        NotEnoughSeats
+        NotEnoughSeats,
+        RestaurantClosed
     }
 }
