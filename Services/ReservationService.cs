@@ -12,16 +12,22 @@ namespace RestaurantFromScratch.Services
     public class ReservationService
     {
         private readonly RestaurantContext _context;
+        private readonly OpeningHoursService _openingHoursService;
 
-        public ReservationService(RestaurantContext context)
+        public ReservationService(RestaurantContext context, OpeningHoursService openingHoursService)
         {
             _context = context;
+            _openingHoursService = openingHoursService;
         }
 
 
 
         public AddReservationServiceResult AddReservation(CreateReservationDto reservation)
         {
+            if (!_openingHoursService.IsRestaurantOpen(reservation.ReservationStart, reservation.ReservationEnd))
+            {
+                return new AddReservationServiceResult { Result = AddReservationResult.RestaurantClosed };
+            }
             var table = _context.Tables.FirstOrDefault(t => t.Id == reservation.TableId);
             if (table == null)
             {
@@ -87,6 +93,18 @@ namespace RestaurantFromScratch.Services
         }
         public NextAvailableReservationDto? GetNextAvailableReservation(AvailableTablesQueryDto query)
         {
+            var openingHour = _openingHoursService.GetOpeningHours(query.ReservationStart);
+
+            if (openingHour == null ||
+                openingHour.IsClosed ||
+                openingHour.OpenTime == null ||
+                openingHour.CloseTime == null)
+            {
+                return null;
+            }
+            var openingDateTime = query.ReservationStart.Date + openingHour.OpenTime.Value.ToTimeSpan();
+            var closingDateTime = query.ReservationStart.Date + openingHour.CloseTime.Value.ToTimeSpan();
+            var searchStart =query.ReservationStart < openingDateTime? openingDateTime: query.ReservationStart;
             var suitableTables = _context.Tables
                 .Where(t => t.Seats >= query.NumberOfGuests && t.IsActive == true)
                 .ToList();
@@ -106,7 +124,12 @@ namespace RestaurantFromScratch.Services
                 .Where(r => r.TableId == table.Id);
                 
 
-                var nextAvailableStart = FindNextAvailableStart(query.ReservationStart, duration, reservationsForTable);
+                var nextAvailableStart = FindNextAvailableStart(searchStart, duration, reservationsForTable);
+
+                if (nextAvailableStart + duration > closingDateTime)
+                {
+                    continue;
+                }
 
                 var nextAvailableReservation = new NextAvailableReservationDto
                 {
@@ -133,8 +156,7 @@ namespace RestaurantFromScratch.Services
                     break;
                 }
 
-                if (candidateStart < existingReservation.ReservationEnd &&
-                    candidateEnd > existingReservation.ReservationStart)
+                if (candidateStart < existingReservation.ReservationEnd && candidateEnd > existingReservation.ReservationStart)
                 {
                     candidateStart = existingReservation.ReservationEnd;
                 }
@@ -157,10 +179,13 @@ namespace RestaurantFromScratch.Services
         {
             var existingReservation = _context.Reservations.Include(r => r.Table).FirstOrDefault(r => r.Id == id);
 
-
             if (existingReservation == null)
             {
                 return UpdateReservationResult.ReservationNotFound;
+            }
+            if (!_openingHoursService.IsRestaurantOpen(updatedReservation.ReservationStart, updatedReservation.ReservationEnd))
+            {
+                return UpdateReservationResult.RestaurantClosed;
             }
             if (!IsThereEnoughSeats(existingReservation.Table.Seats, updatedReservation.NumberOfGuests))
             {

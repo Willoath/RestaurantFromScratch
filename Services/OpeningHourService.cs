@@ -1,4 +1,5 @@
-﻿using RestaurantFromScratch.Data;
+﻿using RestaurantApi.Models;
+using RestaurantFromScratch.Data;
 
 namespace RestaurantFromScratch.Services
 {
@@ -37,6 +38,10 @@ namespace RestaurantFromScratch.Services
             var closeTime = openingHour.CloseTime.Value;
 
             return startTime >= openTime && endTime <= closeTime;
+        }
+        public OpeningHour? GetOpeningHours(DateTime date)
+        {
+            return _context.OpeningHours.FirstOrDefault(o => o.DayOfWeek == date.DayOfWeek);
         }
     }
 }
