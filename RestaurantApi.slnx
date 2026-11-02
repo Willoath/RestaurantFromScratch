@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="../RestaurantApi.Tests/RestaurantApi.Tests.csproj" Id="02d38524-840e-41b9-929e-e94d37b46f0b" />
   <Project Path="RestaurantApi.csproj" />
 </Solution>
