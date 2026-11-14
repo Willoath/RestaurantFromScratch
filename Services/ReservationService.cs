@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Routing.Matching;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RestaurantFromScratch.Data;
 using RestaurantFromScratch.Dtos;
 using RestaurantFromScratch.Enums;
 using RestaurantFromScratch.Models;
 using RestaurantFromScratch.Results;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+
 
 namespace RestaurantFromScratch.Services
 {
@@ -14,33 +13,38 @@ namespace RestaurantFromScratch.Services
         private readonly RestaurantContext _context;
         private readonly OpeningHoursService _openingHoursService;
 
-        public ReservationService(RestaurantContext context, OpeningHoursService openingHoursService)
+        private readonly ReservationAvailabilityCalculator _availabilityCalculator;
+
+        public ReservationService(RestaurantContext context, OpeningHoursService openingHoursService, ReservationAvailabilityCalculator availabilityCalculator)
         {
             _context = context;
             _openingHoursService = openingHoursService;
+            _availabilityCalculator = availabilityCalculator;
         }
+        
 
 
 
         public AddReservationServiceResult AddReservation(CreateReservationDto reservation)
         {
-            if (!_openingHoursService.IsRestaurantOpen(reservation.ReservationStart, reservation.ReservationEnd))
-            {
-                return new AddReservationServiceResult { Result = AddReservationResult.RestaurantClosed };
-            }
-            var table = _context.Tables.FirstOrDefault(t => t.Id == reservation.TableId);
+            var table = _context.Tables.FirstOrDefault(t => t.Id == reservation.TableId && t.IsActive == true);
             if (table == null)
             {
                 return new AddReservationServiceResult { Result = AddReservationResult.TableNotFound };
-            }
-            if (!IsThereEnoughSeats(table.Seats, reservation.NumberOfGuests))
-            {
-                return new AddReservationServiceResult { Result = AddReservationResult.NotEnoughSeats };
             }
             if (!IsTableAvailable(reservation.TableId, reservation.ReservationStart, reservation.ReservationEnd))
             {
                 return new AddReservationServiceResult { Result = AddReservationResult.TableAlreadyReserved };
             }
+            if (!_openingHoursService.IsRestaurantOpen(reservation.ReservationStart, reservation.ReservationEnd))
+            {
+                return new AddReservationServiceResult { Result = AddReservationResult.RestaurantClosed };
+            }
+            if (!IsThereEnoughSeats(table.Seats, reservation.NumberOfGuests))
+            {
+                return new AddReservationServiceResult { Result = AddReservationResult.NotEnoughSeats };
+            }
+            
             var newReservation = new Reservation
             {
                 CustomerName = reservation.CustomerName,
@@ -93,76 +97,80 @@ namespace RestaurantFromScratch.Services
         }
         public NextAvailableReservationDto? GetNextAvailableReservation(AvailableTablesQueryDto query)
         {
-            var openingHour = _openingHoursService.GetOpeningHours(query.ReservationStart);
-
-            if (openingHour == null ||
-                openingHour.IsClosed ||
-                openingHour.OpenTime == null ||
-                openingHour.CloseTime == null)
-            {
-                return null;
-            }
-            var openingDateTime = query.ReservationStart.Date + openingHour.OpenTime.Value.ToTimeSpan();
-            var closingDateTime = query.ReservationStart.Date + openingHour.CloseTime.Value.ToTimeSpan();
-            var searchStart =query.ReservationStart < openingDateTime? openingDateTime: query.ReservationStart;
+            var duration = query.ReservationEnd - query.ReservationStart;
             var suitableTables = _context.Tables
                 .Where(t => t.Seats >= query.NumberOfGuests && t.IsActive == true)
                 .ToList();
-            var duration = query.ReservationEnd - query.ReservationStart;
-            var nextAvailableReservations = new List<NextAvailableReservationDto>();
-
             var tableIds = suitableTables.Select(t => t.Id).ToList();
-
+            var searchEnd = query.ReservationStart.Date.AddDays(7);
             var existingReservations = _context.Reservations
                 .Where(r => tableIds.Contains(r.TableId) &&
-                            r.ReservationEnd > query.ReservationStart)
+                            r.ReservationEnd > query.ReservationStart &&
+                            r.ReservationStart < searchEnd)
                 .OrderBy(r => r.ReservationStart)
                 .ToList();
-            foreach(var table in suitableTables)
+            for (int dayOffset = 0; dayOffset < 7; dayOffset++)
             {
-                var reservationsForTable = existingReservations
-                .Where(r => r.TableId == table.Id);
-                
+                var nextAvailableReservations = new List<NextAvailableReservationDto>();
+                var currentDate = query.ReservationStart.Date.AddDays(dayOffset);
 
-                var nextAvailableStart = FindNextAvailableStart(searchStart, duration, reservationsForTable);
+                var openingHour =
+                    _openingHoursService.GetOpeningHours(currentDate);
 
-                if (nextAvailableStart + duration > closingDateTime)
+                if (openingHour == null ||
+                    openingHour.IsClosed ||
+                    openingHour.OpenTime == null ||
+                    openingHour.CloseTime == null)
                 {
                     continue;
                 }
 
-                var nextAvailableReservation = new NextAvailableReservationDto
-                {
-                    TableId = table.Id,
-                    TableNumber = table.TableNumber,
-                    Seats = table.Seats,
-                    ReservationStart = nextAvailableStart,
-                    ReservationEnd = nextAvailableStart + duration
-                };
-                nextAvailableReservations.Add(nextAvailableReservation);
-            }
+                var openingDateTime =
+                    currentDate + openingHour.OpenTime.Value.ToTimeSpan();
 
-            return nextAvailableReservations.OrderBy(r => r.ReservationStart).FirstOrDefault();
-        }
-        private DateTime FindNextAvailableStart(DateTime requestedStart,TimeSpan duration,IEnumerable<Reservation> reservations)
-        {
-            var candidateStart = requestedStart;
-            foreach (var existingReservation in reservations.OrderBy(r => r.ReservationStart))
-            {
-                var candidateEnd = candidateStart + duration;
+                var closingDateTime =
+                    currentDate + openingHour.CloseTime.Value.ToTimeSpan();
 
-                if (candidateEnd <= existingReservation.ReservationStart)
+                var searchStart = dayOffset == 0
+                    ? (query.ReservationStart < openingDateTime
+                        ? openingDateTime
+                        : query.ReservationStart)
+                    : openingDateTime;
+
+
+                foreach (var table in suitableTables)
                 {
-                    break;
+
+                    var reservationsForTable = existingReservations
+                    .Where(r => r.TableId == table.Id);
+
+                    var nextAvailableStart = _availabilityCalculator.FindNextAvailableStart(searchStart, duration, reservationsForTable);
+
+                    if (nextAvailableStart + duration > closingDateTime)
+                    {
+                        continue;
+                    }
+                    var nextAvailableReservation = new NextAvailableReservationDto
+                    {
+                        TableId = table.Id,
+                        TableNumber = table.TableNumber,
+                        Seats = table.Seats,
+                        ReservationStart = nextAvailableStart,
+                        ReservationEnd = nextAvailableStart + duration
+                    };
+                    nextAvailableReservations.Add(nextAvailableReservation);
+
                 }
-
-                if (candidateStart < existingReservation.ReservationEnd && candidateEnd > existingReservation.ReservationStart)
+                if (nextAvailableReservations.Count > 0)
                 {
-                    candidateStart = existingReservation.ReservationEnd;
+                    return nextAvailableReservations
+                        .OrderBy(r => r.ReservationStart)
+                        .First();
                 }
             }
-            return candidateStart;
+            return null;
         }
+        
 
         private bool IsTableAvailable(int tableId, DateTime reservationStart, DateTime reservationEnd, int? excludedReservationId = null)
         {
@@ -183,6 +191,10 @@ namespace RestaurantFromScratch.Services
             {
                 return UpdateReservationResult.ReservationNotFound;
             }
+            if (!IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id))
+            {
+                return UpdateReservationResult.TableAlreadyReserved;
+            }
             if (!_openingHoursService.IsRestaurantOpen(updatedReservation.ReservationStart, updatedReservation.ReservationEnd))
             {
                 return UpdateReservationResult.RestaurantClosed;
@@ -191,10 +203,7 @@ namespace RestaurantFromScratch.Services
             {
                 return UpdateReservationResult.NotEnoughSeats;
             }
-            if (!IsTableAvailable(existingReservation.TableId, updatedReservation.ReservationStart, updatedReservation.ReservationEnd, existingReservation.Id))
-            {
-                return UpdateReservationResult.TableAlreadyReserved;
-            }
+            
             existingReservation.ReservationStart = updatedReservation.ReservationStart;
             existingReservation.ReservationEnd = updatedReservation.ReservationEnd;
             existingReservation.CustomerName = updatedReservation.CustomerName;
@@ -216,6 +225,7 @@ namespace RestaurantFromScratch.Services
             _context.SaveChanges();
             return true;
         }
+
 
     }
 }
