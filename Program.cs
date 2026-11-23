@@ -15,9 +15,13 @@ builder.Services.AddDbContext<RestaurantContext>(options =>
     options.UseSqlite("Data Source=restaurant.db"));
 builder.Services.AddScoped<OpeningHoursService>();
 builder.Services.AddScoped<TableService>();
+builder.Services.AddScoped<ReservationAvailabilityCalculator>();
 builder.Services.AddScoped<ReservationService>();
 
 var app = builder.Build();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

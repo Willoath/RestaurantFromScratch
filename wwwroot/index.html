@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Restauracja</title>
+
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <h1>Restauracja</h1>
+
+    <section>
+        <h2>Zarezerwuj stolik</h2>
+
+        <form id="availability-form">
+
+            <label for="reservation-date">
+                Data
+            </label>
+
+            <input type="date"
+                   id="reservation-date"
+                   required>
+
+            <label for="reservation-time">
+                Godzina
+            </label>
+
+            <input type="time"
+                   id="reservation-time"
+                   required>
+
+            <label for="number-of-guests">
+                Liczba osób
+            </label>
+
+            <input type="number"
+                   id="number-of-guests"
+                   min="1"
+                   required>
+
+            <button type="submit">
+                Sprawdź dostępność
+            </button>
+
+        </form>
+
+        <div id="availability-result"></div>
+
+    </section>
+
+    <script src="/js/app.js"></script>
+
+</body>
+</html>
