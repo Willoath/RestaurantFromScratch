@@ -1,4 +1,5 @@
-﻿function formatDateTimeForApi(date) {
+﻿let selectedReservation = null;
+function formatDateTimeForApi(date) {
     const year = date.getFullYear();
 
     const month = String(date.getMonth() + 1)
@@ -21,6 +22,8 @@
 
 const form = document.getElementById("availability-form");
 const availabilityResult = document.getElementById("availability-result");
+const reservationSection = document.getElementById("reservation-section");
+const reservationForm = document.getElementById("reservation-form");
 
 form.addEventListener("submit", async function (event) {
     event.preventDefault();
@@ -35,8 +38,7 @@ form.addEventListener("submit", async function (event) {
         document.getElementById("number-of-guests").value;
 
     const reservationStart = new Date(
-        `${reservationDate}T${reservationTime}`
-    );
+        `${reservationDate}T${reservationTime}`);
 
     const reservationEnd = new Date(reservationStart);
     reservationEnd.setHours(reservationEnd.getHours() + 2);
@@ -119,11 +121,31 @@ form.addEventListener("submit", async function (event) {
                 minute: "2-digit"
             });
 
-        availabilityResult.textContent =
-            `Brak wolnych stolików w wybranym terminie. ` +
+        const suggestionText = document.createElement("p");
+
+        suggestionText.textContent =
             `Najbliższy dostępny termin: ${formattedDate}, ` +
             `${formattedStartTime}–${formattedEndTime}, ` +
             `stolik nr ${nextAvailableReservation.tableNumber}.`;
+
+        const selectSuggestionButton = document.createElement("button");
+        selectSuggestionButton.type = "button";
+        selectSuggestionButton.textContent = "Wybierz ten termin";
+
+        selectSuggestionButton.addEventListener("click", function () {
+            selectedReservation = {
+                tableId: nextAvailableReservation.tableId,
+                reservationStart: nextAvailableReservation.reservationStart,
+                reservationEnd: nextAvailableReservation.reservationEnd,
+                numberOfGuests: guests
+            };
+            reservationSection.hidden = false;
+
+            const selectedReservationSummary = document.getElementById("selected-reservation-summary");
+            console.log("Wybrana sugerowana rezerwacja:", selectedReservation);
+        });
+
+        availabilityResult.replaceChildren(suggestionText,selectSuggestionButton);
 
         return;
     }
@@ -134,10 +156,83 @@ form.addEventListener("submit", async function (event) {
         tableElement.textContent =
             `Stolik nr ${table.tableNumber} — ${table.seats} miejsc`;
 
+        const selectButton = document.createElement("button");
+        selectButton.type = "button";
+        selectButton.textContent = "Wybierz";
+
+        selectButton.addEventListener("click", function () {
+            selectedReservation = {
+                tableId: table.id,
+                reservationStart: reservationStartForApi,
+                reservationEnd: reservationEndForApi,
+                numberOfGuests: guests
+            
+            };
+            reservationSection.hidden = false;
+
+            console.log("Wybrana rezerwacja:", selectedReservation);
+
+
+        });
+
         availabilityResult.appendChild(tableElement);
+        availabilityResult.appendChild(selectButton);
     }
 
     console.log("Start:", reservationStart);
     console.log("Koniec:", reservationEnd);
     console.log("Goście:", guests);
+})
+reservationForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (selectedReservation === null) {
+        console.error("Nie wybrano rezerwacji.");
+        return;
+    }
+
+    const customerName =
+        document.getElementById("customer-name").value.trim();
+
+    const phoneNumber =
+        document.getElementById("phone-number").value.trim();
+
+    const notes =
+        document.getElementById("notes").value.trim();
+
+    const reservation = {
+        customerName: customerName,
+        phoneNumber: phoneNumber,
+        reservationStart: selectedReservation.reservationStart,
+        reservationEnd: selectedReservation.reservationEnd,
+        numberOfGuests: selectedReservation.numberOfGuests,
+        notes: notes,
+        tableId: selectedReservation.tableId
+    };
+
+    console.log("Rezerwacja do wysłania:", reservation);
+
+    const response = await fetch("/api/reservation", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(reservation)
+
+    });
+    if (!response.ok) {
+        console.error(
+            "Nie udalo sie utworzyc rezerwacji:",
+            response.status
+        );
+        return;
+    }
+    console.log("Rezerwacja zostala utworzona.");
+
+    availabilityResult.textContent = "Rezerwacja została pomyślnie utworzona!";
+
+    reservationForm.reset();
+    reservationSection.hidden = true;
+    selectedReservation = null;
 });
+;

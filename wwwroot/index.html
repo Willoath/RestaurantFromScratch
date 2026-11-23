@@ -51,6 +51,38 @@
 
         <div id="availability-result"></div>
 
+        <section id="reservation-section" hidden>
+            <h2>Dane rezerwacji</h2>
+            <p id="selected-reservation-summary"></p>
+
+            <form id="reservation-form">
+                <label for="customer-name">
+                    Imię
+                </label>
+
+                <input type="text"
+                       id="customer-name"
+                       required>
+
+                <label for="phone-number">
+                    Numer telefonu
+                </label>
+                <input type="tel"
+                       id="phone-number"
+                       required>
+
+                <label for="notes">
+                    Uwagi
+                </label>
+
+                <textarea id="notes"></textarea>
+
+                <button type="submit">
+                    Zarezerwuj stolik
+                </button>
+            </form>
+        </section>
+
     </section>
 
     <script src="/js/app.js"></script>

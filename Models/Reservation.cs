@@ -8,6 +8,7 @@ namespace RestaurantFromScratch.Models
         [Required]
         public string CustomerName { get; set; } = string.Empty;
         [Required]
+        [RegularExpression(@"^\d{9}$",ErrorMessage = "Phone number must contain exactly 9 digits.")]
         public string PhoneNumber { get; set; } = string.Empty;
         public DateTime ReservationStart { get; set; }
         [Range(1,6)]
