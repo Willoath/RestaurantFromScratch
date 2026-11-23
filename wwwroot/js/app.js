@@ -20,6 +20,7 @@
 }
 
 const form = document.getElementById("availability-form");
+const availabilityResult = document.getElementById("availability-result");
 
 form.addEventListener("submit", async function (event) {
     event.preventDefault();
@@ -54,9 +55,13 @@ form.addEventListener("submit", async function (event) {
         NumberOfGuests: guests
     });
 
+    availabilityResult.replaceChildren();
+
     const response = await fetch(
         `/api/table/available?${parameters}`
     );
+
+
 
     if (!response.ok) {
         console.error(
@@ -73,6 +78,64 @@ form.addEventListener("submit", async function (event) {
         "Dostępne stoliki:",
         availableTables
     );
+
+
+    if (availableTables.length === 0) {
+        availabilityResult.textContent =
+            "Brak wolnych stolików w wybranym terminie. Szukam najbliższego terminu...";
+
+        const nextAvailableResponse = await fetch(
+            `/api/reservation/nextavailable?${parameters}`
+        );
+
+        if (!nextAvailableResponse.ok) {
+            availabilityResult.textContent =
+                "Nie znaleziono wolnego terminu w ciągu najbliższych 7 dni.";
+
+            return;
+        }
+
+        const nextAvailableReservation =
+            await nextAvailableResponse.json();
+
+        const nextStart =
+            new Date(nextAvailableReservation.reservationStart);
+
+        const nextEnd =
+            new Date(nextAvailableReservation.reservationEnd);
+
+        const formattedDate =
+            nextStart.toLocaleDateString("pl-PL");
+
+        const formattedStartTime =
+            nextStart.toLocaleTimeString("pl-PL", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+        const formattedEndTime =
+            nextEnd.toLocaleTimeString("pl-PL", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+        availabilityResult.textContent =
+            `Brak wolnych stolików w wybranym terminie. ` +
+            `Najbliższy dostępny termin: ${formattedDate}, ` +
+            `${formattedStartTime}–${formattedEndTime}, ` +
+            `stolik nr ${nextAvailableReservation.tableNumber}.`;
+
+        return;
+    }
+
+    for (const table of availableTables) {
+        const tableElement = document.createElement("p");
+
+        tableElement.textContent =
+            `Stolik nr ${table.tableNumber} — ${table.seats} miejsc`;
+
+        availabilityResult.appendChild(tableElement);
+    }
 
     console.log("Start:", reservationStart);
     console.log("Koniec:", reservationEnd);

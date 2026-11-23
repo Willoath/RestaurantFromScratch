@@ -4,7 +4,7 @@ namespace RestaurantFromScratch.Dtos
 {
     public class AvailableTablesQueryDto : ReservationTimeDto
     {
-        [Range(1, 6)]
+        [Range(1, int.MaxValue)]
         public int NumberOfGuests { get; set; }
     }
 }
